@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品仕様リサーチャー | Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+        
+        :root {
+            --rakuten-red: #bf0000;
+            --rakuten-red-dark: #a00000;
+            --rakuten-red-light: #fbeaea;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+            background-color: #f4f4f4;
+            background-image: linear-gradient(180deg, #ffffff 0%, #f4f4f4 300px);
+            background-attachment: fixed;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e5e5e5;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-rakuten {
+            background-color: var(--rakuten-red);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-rakuten:hover {
+            background-color: var(--rakuten-red-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(191, 0, 0, 0.2);
+        }
+
+        .btn-rakuten:active {
+            transform: translateY(0);
+        }
+
+        .copy-feedback {
+            transform: translateY(10px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .copy-feedback.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .item-label {
+            color: #666;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            border-left: 3px solid var(--rakuten-red);
+            padding-left: 8px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #999; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased selection:bg-red-100">
+
+    <div class="max-w-4xl mx-auto px-6 py-10">
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <div class="inline-block bg-white border border-slate-200 rounded-full px-4 py-1 mb-6 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-red-600 rounded-full"></span>
+                    <span class="text-[11px] font-bold text-slate-600 tracking-wider uppercase">RMS Support Tool</span>
+                </div>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
+                商品仕様リサーチャー
+            </h1>
+            <p class="text-slate-500 text-sm">楽天ディレクトリ形式のカテゴリ・仕様を自動抽出</p>
+        </header>
+
+        <!-- Stats Counter -->
+        <div class="mb-4 flex justify-end">
+            <div class="bg-white px-4 py-2 rounded-xl border border-slate-200 flex items-center gap-4 shadow-sm">
+                <div class="flex flex-col">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">リサーチ済み</span>
+                    <div class="flex items-baseline gap-1">
+                        <span id="searchCount" class="text-xl font-bold text-red-600 leading-none">0</span>
+                        <span class="text-[10px] text-slate-400 font-bold">件</span>
+                    </div>
+                </div>
+                <button id="resetCountBtn" title="件数をリセット" class="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-300 hover:text-red-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Search Card -->
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 md:p-10 mb-10">
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 ml-1 uppercase tracking-wider">検索キーワード</label>
+                    <div class="relative group">
+                        <input type="text" id="productName" 
+                            class="w-full pl-6 pr-14 py-5 rounded-2xl bg-slate-50 border-2 border-slate-200 outline-none transition-all focus:border-red-600 focus:bg-white text-lg font-medium placeholder:text-slate-400"
+                            placeholder="商品名、メーカー型番、JANなどを入力...">
+                        <button id="resetBtn" title="入力をクリア" class="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-slate-500 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Primary Action Button -->
+                <button id="searchBtn" 
+                    class="w-full btn-rakuten text-white font-bold py-6 rounded-2xl shadow-lg flex items-center justify-center gap-3 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span class="text-xl tracking-wider">リサーチを開始する</span>
+                </button>
+            </div>
+
+            <!-- Smart Loading Indicator -->
+            <div id="statusArea" class="hidden mt-8 p-5 rounded-2xl bg-red-50 border border-red-100 flex flex-col items-center justify-center gap-3 animate-pulse">
+                <div class="flex space-x-2">
+                    <div class="w-2 h-2 bg-red-600 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-red-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div class="w-2 h-2 bg-red-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                </div>
+                <div class="text-center">
+                    <span class="block text-xs font-bold text-red-600 uppercase tracking-[0.2em] mb-1">Searching...</span>
+                    <span class="text-xs text-red-400 italic">楽天ディレクトリ・公式サイトの情報を統合中</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultArea" class="hidden space-y-6">
+            <div class="flex items-center gap-4">
+                <span class="text-xs font-extrabold text-slate-400 uppercase tracking-widest whitespace-nowrap">抽出結果</span>
+                <div class="h-[1px] w-full bg-slate-200"></div>
+            </div>
+            
+            <div id="specContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Result Items -->
+            </div>
+        </div>
+
+        <!-- Error View -->
+        <div id="errorArea" class="hidden bg-white border border-red-200 p-10 text-center rounded-3xl shadow-sm">
+            <div class="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="font-bold text-slate-900 mb-2">情報が見つかりませんでした</h3>
+            <p class="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
+                入力内容を確認し、メーカー名や型番（No.）を組み合わせて再度お試しください。
+            </p>
+        </div>
+
+        <footer class="mt-16 text-center pb-10">
+            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-3">Professional E-commerce Tool</p>
+            <div class="h-1 w-12 bg-slate-200 mx-auto"></div>
+        </footer>
+    </div>
+
+    <script>
+        const apiKey = ""; 
+        const searchBtn = document.getElementById('searchBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const resetCountBtn = document.getElementById('resetCountBtn');
+        const searchCountEl = document.getElementById('searchCount');
+        const productNameInput = document.getElementById('productName');
+        const statusArea = document.getElementById('statusArea');
+        const resultArea = document.getElementById('resultArea');
+        const specContainer = document.getElementById('specContainer');
+        const errorArea = document.getElementById('errorArea');
+
+        let count = 0;
+
+        const systemInstruction = `
+あなたは、ECサイト（楽天市場）の商品登録を支援する「商品仕様リサーチャー」です。
+ユーザーが入力したキーワードから、最高精度の仕様情報を抽出してください。
+※JANコードは不要です。
+
+### 抽出ルール：カテゴリ（RMS準拠）
+「カテゴリ」項目は、楽天市場の「全商品ディレクトリID」に基づいたディレクトリ階層（第1階層 > 第2階層 > ...）で出力してください。
+単なる商品種別（例：軽量長靴）ではなく、RMSの登録画面で選択するような正式な階層構造を推測して出力すること。
+例：「花・ガーデン・DIY > DIY・工具 > 安全・保護用品 > 作業靴・安全靴 > 長靴・レインシューズ」
+
+### 重要ミッション
+1. 型番（No. / 型番）の特定と、それに紐づく正しいスペックの抽出。
+2. サイズ違い（S/M/L/XL）によるスペックの取り違えを絶対に防ぐ。
+3. 最新のメーカー公式サイトの情報を最優先する。
+
+### 抽出項目
+ブランド名 / シリーズ名 / メーカー型番 / カラー / カテゴリ / 原産国／製造国 / 商品の特長（3つ程度）
+
+### 出力
+「項目名: 値」のプレーンテキストのみ。
+Markdown装飾（**等）は一切禁止。
+        `;
+
+        function createSpecItem(label, value) {
+            const cleanValue = value.replace(/[*#]/g, '').trim();
+            const isPriority = label.includes('型番') || label.includes('特長') || label.includes('カテゴリ');
+            const colSpan = isPriority ? 'md:col-span-2' : '';
+            const bgClass = isPriority ? 'bg-red-50/30 border-red-100' : 'bg-white border-slate-200';
+            
+            const div = document.createElement('div');
+            div.className = `group ${bgClass} border p-5 rounded-2xl transition-all relative overflow-hidden ${colSpan} shadow-sm hover:shadow-md`;
+            div.innerHTML = `
+                <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div class="flex-1">
+                        <div class="item-label mb-2">${label}</div>
+                        <div class="text-slate-900 font-bold ${isPriority ? 'text-lg' : 'text-base'} tracking-tight whitespace-pre-wrap">${cleanValue}</div>
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <span class="copy-feedback hidden text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">コピー完了</span>
+                        <button class="copy-btn p-3 text-slate-400 hover:text-red-600 transition-colors bg-slate-50 hover:bg-white border border-slate-100 rounded-xl shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const btn = div.querySelector('.copy-btn');
+            const feedback = div.querySelector('.copy-feedback');
+            btn.addEventListener('click', () => {
+                const el = document.createElement('textarea');
+                el.value = cleanValue;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                
+                feedback.classList.remove('hidden');
+                feedback.classList.add('show');
+                setTimeout(() => {
+                    feedback.classList.remove('show');
+                    setTimeout(() => feedback.classList.add('hidden'), 300);
+                }, 1500);
+            });
+            return div;
+        }
+
+        async function performResearch() {
+            const productName = productNameInput.value.trim();
+            if (!productName) return;
+
+            searchBtn.disabled = true;
+            statusArea.classList.remove('hidden');
+            resultArea.classList.add('hidden');
+            errorArea.classList.add('hidden');
+            specContainer.innerHTML = '';
+
+            let retries = 0;
+            const maxRetries = 5;
+
+            async function callGemini(delay = 1000) {
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: `商品「${productName}」をリサーチし、楽天市場のディレクトリ構造に合わせた「カテゴリ」と詳細な仕様を抽出してください。JANコードは除外してください。` }] }],
+                            systemInstruction: { parts: [{ text: systemInstruction }] },
+                            tools: [{ "google_search": {} }]
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('API Error');
+                    const data = await response.json();
+                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (!text) throw new Error('No Content');
+
+                    const lines = text.split('\n');
+                    const labels = ["ブランド名", "シリーズ名", "メーカー型番", "カラー", "カテゴリ", "原産国／製造国", "商品の特長"];
+                    
+                    let found = 0;
+                    lines.forEach(line => {
+                        if (line.includes(':')) {
+                            const [l, ...v] = line.split(':');
+                            const cleanL = l.replace(/[*#-]/g, '').trim();
+                            if (labels.some(lbl => cleanL.includes(lbl))) {
+                                specContainer.appendChild(createSpecItem(cleanL, v.join(':').trim()));
+                                found++;
+                            }
+                        }
+                    });
+
+                    if (found > 0) {
+                        count++;
+                        searchCountEl.textContent = count;
+                        resultArea.classList.remove('hidden');
+                    } else {
+                        errorArea.classList.remove('hidden');
+                    }
+
+                } catch (e) {
+                    if (retries < maxRetries) {
+                        retries++;
+                        setTimeout(() => callGemini(delay * 2), delay);
+                    } else {
+                        errorArea.classList.remove('hidden');
+                    }
+                } finally {
+                    statusArea.classList.add('hidden');
+                    searchBtn.disabled = false;
+                }
+            }
+
+            callGemini();
+        }
+
+        searchBtn.addEventListener('click', performResearch);
+        resetBtn.addEventListener('click', () => {
+            productNameInput.value = '';
+            resultArea.classList.add('hidden');
+            errorArea.classList.add('hidden');
+        });
+        resetCountBtn.addEventListener('click', () => {
+            count = 0;
+            searchCountEl.textContent = count;
+        });
+        productNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') performResearch(); });
+    </script>
+</body>
+</html>
